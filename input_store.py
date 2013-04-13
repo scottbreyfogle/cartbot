@@ -38,13 +38,15 @@ def read_input():
 def store(image_dir):
     previous_time = time()
     current_time = 0
+    if not os.path.exists(image_dir):
+        os.mkdir(image_dir)
     while running:
         current_time = time() - previous_time
         img_file = "%s/%.4fs.png" % (image_dir,current_time) 
-        fail = os.system("scrot -u {}".format(img_file))
+        fail = os.system("./scrot -u {}".format(img_file))
         if fail:
+            print "Scrot failed!"
             break
-        print(result)
         input_dict[current_time] = (img_file,list(events))
         sleep(.1)
 
