@@ -1,41 +1,46 @@
 from evdev import ecodes
 import ImageOps
 import Image
+import array
 
 # Output nodes
 num_outputs = 7
 
 # How far to down sample the input image
-sampleWidth = 32
-sampleHeight = 24
+sample_width = 32
+sample_height = 24
 
 key_mapping = {
         ecodes.KEY_UP: 0,
         ecodes.KEY_DOWN: 1,
         ecodes.KEY_LEFT: 2,
-        ecodes.KEY.RIGHT: 3,
-        ecodes.KEY_LSHIFT: 4,
+        ecodes.KEY_RIGHT: 3,
+        ecodes.KEY_LEFTSHIFT: 4,
         ecodes.KEY_Z: 5,
         ecodes.KEY_C: 6
 }
-net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY.RIGHT, ecodes.KEY_LSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
+net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
+
+input_nodes = sample_width*sample_height
+output_nodes = len(key_mapping)
 
 
-def down_sample(img):
-    img.thumbnail((sampleWidth,sampleHeight), Image.ANTIALIAS)
-    return img
 def down_sample(image):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
-    return ImageOps.grayscale(image.thumbnail((sampleWidth,sampleHeight), Image.ANTIALIAS))
+    image = image.resize((sample_width,sample_height),Image.ANTIALIAS)
+    image = ImageOps.grayscale(image)
+    return image
 
 def image_to_input(image):
     """Takes an image and turns it into a sequence of node input values"""
     image = down_sample(image)
-    result = (0,)[1:]
-    for pixel in img.get_data():
-        result += (pixel,)
-    return result
+    result = []
+    for pixel in image.getdata():
+        result += [float(pixel)]
+    output_array = array.array('d')
+    output_array.fromlist(result)
+    return output_array
 
 def keys_to_output(keys):
     """Takes a list of keys and returns a tuple which corresponds to output
@@ -43,7 +48,10 @@ def keys_to_output(keys):
     output = [0 for i in xrange(output_nodes)]
     for key in keys:
         output[key_mapping[key]] = 1
-    return tuple(output)
+    #return array.fromlist(output)
+    output_array = array.array('d')
+    output_array.fromlist(output)
+    return output_array
 
 def net_to_key(weights):
-    return [net_mapping[w] for w in weights if w > .5]
+    return [net_mapping[w] for w in xrange(len(weights)) if weights[w] > .5]
