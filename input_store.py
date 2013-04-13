@@ -55,8 +55,7 @@ def main():
     thread.start()
     threads.append(thread)
 
-    print("MUPEN64!")
-    emulator = Popen(["mupen64plus", "roms/Mario Kart 64 (USA).n64"])
+    #emulator = Popen(["/usr/games/mupen64plus", "roms/Mario Kart 64 (USA).n64"])
 
     thread = Thread(target=store, args=(sys.argv[2],))
     thread.start()

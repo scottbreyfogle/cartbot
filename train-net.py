@@ -46,7 +46,7 @@ for time in training_data:
         output_values = network.keys_to_output(keys)
         importance = 1
         if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_RIGHT]]: 
-            importance = 2
+            importance = 4
         #data_set.addSample(input_values, output_values, importance)
         for i in xrange(importance):
             data_set.addSample(input_values, output_values)

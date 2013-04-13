@@ -1,6 +1,7 @@
 from evdev import ecodes
 import ImageOps
 import ImageEnhance
+import ImageFilter
 import Image
 import array
 
@@ -8,8 +9,8 @@ import array
 num_outputs = 7
 
 # How far to down sample the input image
-sample_width = 256
-sample_height = 12
+sample_width = 80
+sample_height = 60
 
 key_mapping = {
         ecodes.KEY_UP: 0,
@@ -22,26 +23,34 @@ key_mapping = {
 }
 net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
 
-input_nodes = sample_width*sample_height*3
+input_nodes = 18600
 output_nodes = len(key_mapping)
 
 
 def down_sample(image):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
-    image = ImageEnhance.Contrast(image).enhance(2)
-    image = ImageEnhance.Sharpness(image).enhance(2)
-    image = image.resize((sample_width,sample_height))
-    #image = ImageOps.grayscale(image)
-    return image
+    greyImage = ImageOps.grayscale(image)
+    #image = ImageEnhance.Contrast(image).enhance(1)
+    #image = ImageEnhance.Sharpness(image).enhance(1)
+    smallImage = image.resize((sample_width,sample_height)).filter(ImageFilter.FIND_EDGES)
+    #mapImage = greyImage.crop((640,320,720,530)).resize((40,105))
+    mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((40,105))
+    return [smallImage,mapImage]
+    #return [image]
+    #return [image.crop((0,0,2,600)), image.crop((797,0,799,600))] 
 
 def image_to_input(image):
     """Takes an image and turns it into a sequence of node input values"""
-    image = down_sample(image)
+    images = down_sample(image)
     result = []
-    for pixel in image.getdata():
-        for p in pixel:
-            result += [float(p)]
+    for image in images:
+        for pixel in image.getdata():
+            if type(pixel) == int:
+                result += [float(pixel)]
+            else:
+                for p in pixel:
+                    result += [float(p)]
     output_array = array.array('d')
     output_array.fromlist(result)
     return output_array
