@@ -58,9 +58,6 @@ def main():
     print("MUPEN64!")
     emulator = Popen(["mupen64plus", "roms/Mario Kart 64 (USA).n64"])
 
-    while ecodes.KEY_LEFTSHIFT not in events:
-        sleep(.01)
-    
     thread = Thread(target=store, args=(sys.argv[2],))
     thread.start()
     threads.append(thread)
