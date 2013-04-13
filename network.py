@@ -21,7 +21,7 @@ key_mapping = {
 }
 net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
 
-input_nodes = sample_width*sample_height
+input_nodes = sample_width*sample_height*3
 output_nodes = len(key_mapping)
 
 
@@ -29,7 +29,7 @@ def down_sample(image):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
     image = image.resize((sample_width,sample_height))
-    image = ImageOps.grayscale(image)
+    #image = ImageOps.grayscale(image)
     return image
 
 def image_to_input(image):
@@ -37,7 +37,8 @@ def image_to_input(image):
     image = down_sample(image)
     result = []
     for pixel in image.getdata():
-        result += [float(pixel)]
+        for p in pixel:
+            result += [float(p)]
     output_array = array.array('d')
     output_array.fromlist(result)
     return output_array
