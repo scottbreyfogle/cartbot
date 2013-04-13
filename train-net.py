@@ -6,9 +6,9 @@ import sys
 import json
 import pickle
 import Image
-import evdev.ecodes
+from evdev import ecodes
 from pybrain.tools.shortcuts import buildNetwork
-from pybrain.datasets import SupervisedDataSet
+from pybrain.datasets import SupervisedDataSet, ImportanceDataSet
 from pybrain.supervised.trainers import BackpropTrainer
 
 ################################################################################
@@ -33,6 +33,7 @@ if len(sys.argv) > 5 and int(sys.argv[5]) > 0:
 
 net = buildNetwork(network.input_nodes, hidden_nodes, network.output_nodes)
 data_set = SupervisedDataSet(network.input_nodes, network.output_nodes)
+#data_set = ImportanceDataSet(network.input_nodes, network.output_nodes)
 training_data = json.load(training_file)
 training_file.close()
 
@@ -43,15 +44,18 @@ for time in training_data:
         image_file, keys = training_data[time]
         input_values = network.image_to_input(Image.open(image_file))
         output_values = network.keys_to_output(keys)
-        data_set.addSample(input_values, output_values)
-
-print(len(data_set))
+        importance = 1
+        if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_LEFT]]: 
+            importance = 10
+        #data_set.addSample(input_values, output_values, importance)
+        for i in xrange(importance):
+            data_set.addSample(input_values, output_values)
 
 print("Training the network...")
 
 trainer = BackpropTrainer(net, data_set)
 #trainer.trainUntilConvergence() # We want it to be verbose
-for i in xrange(250):
+for i in xrange(50):
     print("\t" + str(trainer.train()))
 
 print("Saving to disk...")
