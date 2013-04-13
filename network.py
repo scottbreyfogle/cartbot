@@ -4,13 +4,14 @@ import ImageEnhance
 import ImageFilter
 import Image
 import array
+import pygame
 
 # Output nodes
 num_outputs = 7
 
 # How far to down sample the input image
-sample_width = 80
-sample_height = 60
+sample_width = 400
+sample_height = 20
 
 key_mapping = {
         ecodes.KEY_UP: 0,
@@ -23,26 +24,37 @@ key_mapping = {
 }
 net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
 
-input_nodes = 18600
+input_nodes = 28200
 output_nodes = len(key_mapping)
 
+def pil_to_pygame(image):
+    return pygame.image.fromstring( image.convert("RGB").tostring(), image.size, "RGB")
 
-def down_sample(image):
+def down_sample(image, screen):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
     greyImage = ImageOps.grayscale(image)
-    #image = ImageEnhance.Contrast(image).enhance(1)
+    #image = ImageEnhance.Contrast(image).enhance(2)
     #image = ImageEnhance.Sharpness(image).enhance(1)
-    smallImage = image.resize((sample_width,sample_height)).filter(ImageFilter.FIND_EDGES)
+    smallImage = image.resize((sample_width,sample_height))#.filter(ImageFilter.FIND_EDGES)
     #mapImage = greyImage.crop((640,320,720,530)).resize((40,105))
     mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((40,105))
+
+    if(screen):
+        smallImageGame = pil_to_pygame(smallImage.resize((160,240)))
+        screen.blit(smallImageGame,smallImageGame.get_rect())
+        mapImageGame = pil_to_pygame(mapImage.resize((160,240)))
+        mapImageGameRect = mapImageGame.get_rect()
+        mapImageGameRect.left = 160
+        screen.blit(mapImageGame,mapImageGameRect)
+
     return [smallImage,mapImage]
     #return [image]
     #return [image.crop((0,0,2,600)), image.crop((797,0,799,600))] 
 
-def image_to_input(image):
+def image_to_input(image, screen):
     """Takes an image and turns it into a sequence of node input values"""
-    images = down_sample(image)
+    images = down_sample(image, screen)
     result = []
     for image in images:
         for pixel in image.getdata():
