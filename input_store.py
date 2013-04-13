@@ -1,7 +1,7 @@
 from evdev import InputDevice, categorize, ecodes
 from re import search
-import time
 from datetime import datetime
+import time
 import os
 import Image
 
