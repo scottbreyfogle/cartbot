@@ -1,0 +1,3 @@
+pybrain
+mupen64plus
+pil
