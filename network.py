@@ -1,5 +1,6 @@
 from evdev import ecodes
 import ImageOps
+import ImageEnhance
 import Image
 import array
 
@@ -7,8 +8,8 @@ import array
 num_outputs = 7
 
 # How far to down sample the input image
-sample_width = 32
-sample_height = 24
+sample_width = 256
+sample_height = 12
 
 key_mapping = {
         ecodes.KEY_UP: 0,
@@ -28,6 +29,8 @@ output_nodes = len(key_mapping)
 def down_sample(image):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
+    image = ImageEnhance.Contrast(image).enhance(2)
+    image = ImageEnhance.Sharpness(image).enhance(2)
     image = image.resize((sample_width,sample_height))
     #image = ImageOps.grayscale(image)
     return image

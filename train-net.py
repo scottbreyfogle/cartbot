@@ -45,8 +45,8 @@ for time in training_data:
         input_values = network.image_to_input(Image.open(image_file))
         output_values = network.keys_to_output(keys)
         importance = 1
-        if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_LEFT]]: 
-            importance = 10
+        if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_RIGHT]]: 
+            importance = 2
         #data_set.addSample(input_values, output_values, importance)
         for i in xrange(importance):
             data_set.addSample(input_values, output_values)

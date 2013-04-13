@@ -13,21 +13,19 @@ def run(network):
         vals = network.activate(image_to_input(get_active_window()))
         for (index, weight) in enumerate(vals):
             if weight > .5:
-                print("PUSHING: " + str(net_mapping[index]))
+                #print("PUSHING: " + str(net_mapping[index]))
                 ui.write(ecodes.EV_KEY, net_mapping[index], 1)
                 #ui.write(ecodes.EV_KEY, ecodes.KEY_ENTER, 1)
                 ui.syn()
             else:
-                print("POPPING: " + str(net_mapping[index]))
+                #print("POPPING: " + str(net_mapping[index]))
                 ui.write(ecodes.EV_KEY, net_mapping[index], 0)
                 #ui.write(ecodes.EV_KEY, ecodes.KEY_ENTER, 0)
                 ui.syn()
-        time.sleep(.1)
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         network = pickle.load(open(sys.argv[1],"r")) 
         run(network)
-        print "YO"
     else:
         print "Usage: ./cartbot.py neural-net-file"
