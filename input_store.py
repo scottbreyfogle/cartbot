@@ -1,6 +1,7 @@
 from evdev import InputDevice, categorize, ecodes
 from re import search
 import time
+from datetime import datetime
 import os
 import Image
 
@@ -20,10 +21,11 @@ def read_input():
  
 def store():
     input_dict = {}
+    previous_time = datetime.now()
     current_time = 0
     while True:
+        current_time = datetime.now() - previous_time
         os.system("scrot -u %(current_time)s.png", current_time)
         current_img = Image.open("%(current_time)s.png", current_time)
-        input_dict[(current_img,REPLACE_ME_WITH_NAME_OF_SET)] = current_time #replace REPLACE_ME-WITH_NAME_OF_SET with the name of the set of keyboard actions
-        current_time += 0.5
-        time.sleep(0.5)
+        input_dict[(current_img,events)] = current_time
+        time.sleep(0.1)
