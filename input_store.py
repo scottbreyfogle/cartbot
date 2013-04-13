@@ -16,12 +16,13 @@ events = {} #A set that will contain all keys currently being held down
 def read_input():
     for event in dev.read_loop():
         if event.type == ecodes.EV_KEY:
-            (key,state) = search(".+\(KEY_(\w+)\), (up|down)",str(event)).groups()
+            (key,state) = search(".+\(KEY_(\w+)\), (up|down|hold)",str(categorize(event))).groups()
             if state == 'down':
                 if key not in events:
                     events.add(key) #Adds a pressed key to events
-            else:
+            else if state == 'up':
                 if key in events:
+                    events.remove(key) #Removes a released key from events
  
 def store(filename):
     thread.start_new_thread(read_input, ())
