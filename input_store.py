@@ -32,9 +32,9 @@ def store(filename, image_dir):
     try:
         while True:#(time() - previous_time) < 5:
             current_time = time() - previous_time
-            os.system("scrot -u %s/%ds.png" % (image_dir,current_time))
+            os.system("scrot -u %s/%.4fs.png" % (image_dir,current_time))
             #current_img = Image.open("%ds.png" % current_time)
-            input_dict[current_time] = ("%s/%ds.png" % (image_dir,current_time),list(events))
+            input_dict[current_time] = ("%s/%.4fs.png" % (image_dir,current_time),list(events))
             sleep(0.1)
     except KeyboardInterrupt:
         f = open(filename,"w")
