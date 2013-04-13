@@ -56,21 +56,22 @@ def main():
     emulator = Popen(["mupen64plus", "roms/Mario Kart 64 (USA).n64"])
 
     while ecodes.KEY_LEFTSHIFT not in events:
-        sleep(.1)
+        sleep(.01)
     
     thread = Thread(target=store, args=(sys.argv[2],))
     thread.start()
     threads.append(thread)
 
-    return emulator
+    while True:
+        if emulator.poll() == None:
+            sleep(.1)
+        else:
+            return
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
-        emulator = None
         try:
             emulator = main()
-            while True:
-                sleep(1)
         except:
             running = False
             for thread in threads:
@@ -78,7 +79,14 @@ if __name__ == "__main__":
                 thread.join()
             f = open(sys.argv[1], "w")
             json.dump(input_dict,f)
-            emulator.terminate()
             raise
+        else:
+            running = False
+            for thread in threads:
+                "Joining.."
+                thread.join()
+            f = open(sys.argv[1], "w")
+            json.dump(input_dict,f)
+
     else:
         print "Usage: ./input_store.py training_file.json image_directory"
