@@ -6,7 +6,7 @@ import sys
 import json
 import pickle
 import Image
-import evdev.ecodes
+from evdev import ecodes
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.datasets import SupervisedDataSet
 from pybrain.supervised.trainers import BackpropTrainer
@@ -21,11 +21,7 @@ if len(sys.argv) < 4:
 
 neural_net_file = open(sys.argv[2], "w")
 #data_file = open(sys.argv[2]+".data", "w")
-start_time = float(sys.argv[3])
-end_time = float(sys.argv[4])
-hidden_nodes = 15
-if len(sys.argv) > 5 and int(sys.argv[5]) > 0:
-    hidden_nodes =  int(sys.argv[5])
+hidden_nodes =  int(sys.argv[1])
 
 ################################################################################
 # Main
@@ -53,10 +49,17 @@ for train_file in sys.argv[3:]:
 
 print("Training the network...")
 
+min_delta = .0001
+last_error = None
 trainer = BackpropTrainer(net, data_set)
 #trainer.trainUntilConvergence() # We want it to be verbose
-for i in xrange(250):
-    print("\t" + str(trainer.train()))
+for i in xrange(50):
+    error = trainer.train()
+    print("\t" + str(error))
+    if last_error and abs(last_error - error) <= min_delta:
+        print("ABORT ABORT!")
+        break
+    last_error = error
 
 print("Saving to disk...")
 

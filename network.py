@@ -41,13 +41,14 @@ def down_sample(image, screen):
     mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((20,33))
 
     if(screen):
-        smallImageGame = pil_to_pygame(smallImage.resize((160,240)))
+        smallImageGame = pil_to_pygame(smallImage.resize((320,240)))
         screen.blit(smallImageGame,smallImageGame.get_rect())
-        mapImageGame = pil_to_pygame(mapImage.resize((160,240)))
-        mapImageGameRect = mapImageGame.get_rect()
-        mapImageGameRect.left = 160
-        screen.blit(mapImageGame,mapImageGameRect)
+        #mapImageGame = pil_to_pygame(mapImage.resize((160,240)))
+        #mapImageGameRect = mapImageGame.get_rect()
+        #mapImageGameRect.left = 160
+        #screen.blit(mapImageGame,mapImageGameRect)
 
+    #return [smallImage,mapImage]
     return [smallImage,mapImage]
     #return [image]
     #return [image.crop((0,0,2,600)), image.crop((797,0,799,600))] 

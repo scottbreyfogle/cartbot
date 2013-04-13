@@ -18,7 +18,7 @@ def run(network):
         screen.fill((0,0,0))
         vals = network.activate(image_to_input(get_active_window(),screen))
         for (index, weight) in enumerate(vals):
-            if weight > .5:
+            if weight > .47:
                 #print("PUSHING: " + str(net_mapping[index]))
                 ui.write(ecodes.EV_KEY, net_mapping[index], 1)
 #                if(net_mapping[index] == ecodes.KEY_LEFT or net_mapping[index] == ecodes.KEY_RIGHT):
@@ -31,11 +31,10 @@ def run(network):
                 #ui.write(ecodes.EV_KEY, ecodes.KEY_ENTER, 0)
                 ui.syn()
 
-#        time.sleep(.01)
-#        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
-#        ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
-#        time.sleep(.01)
-#        ui.syn()
+        #time.sleep(.1)
+        #ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
+        #ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
+        #ui.syn()
 
         pygame.display.flip()
 
