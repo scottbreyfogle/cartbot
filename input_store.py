@@ -20,7 +20,7 @@ def read_input():
             if state == 'down':
                 if key not in events:
                     events.add(key) #Adds a pressed key to events
-            else if state == 'up':
+            elif state == 'up':
                 if key in events:
                     events.remove(key) #Removes a released key from events
  
@@ -41,6 +41,6 @@ def store(filename):
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        store(sys.args[1])
+        store(sys.argv[1])
     else:
         print "Usage: ./input_store.py file"
