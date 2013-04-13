@@ -21,7 +21,7 @@ if len(sys.argv) < 5:
 
 training_file = open(sys.argv[1], "r")
 neural_net_file = open(sys.argv[2], "w")
-data_file = open(sys.argv[2]+".data", "w")
+#data_file = open(sys.argv[2]+".data", "w")
 start_time = float(sys.argv[3])
 end_time = float(sys.argv[4])
 hidden_nodes = 15
@@ -47,7 +47,7 @@ for time in training_data:
         output_values = network.keys_to_output(keys)
         importance = 1
         if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_RIGHT]]: 
-            importance = 1
+            importance = 4
         #data_set.addSample(input_values, output_values, importance)
         for i in xrange(importance):
             data_set.addSample(input_values, output_values)
@@ -56,11 +56,11 @@ print("Training the network...")
 
 trainer = BackpropTrainer(net, data_set)
 #trainer.trainUntilConvergence() # We want it to be verbose
-for i in xrange(50):
+for i in xrange(100):
     print("\t" + str(trainer.train()))
 
 print("Saving to disk...")
 
 pickle.dump(net,neural_net_file)
-pickle.dump(data_set,data_file)
+#pickle.dump(data_set,data_file)
 

@@ -10,8 +10,8 @@ import pygame
 num_outputs = 7
 
 # How far to down sample the input image
-sample_width = 400
-sample_height = 20
+sample_width = 40
+sample_height = 30
 
 key_mapping = {
         ecodes.KEY_UP: 0,
@@ -24,7 +24,7 @@ key_mapping = {
 }
 net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
 
-input_nodes = 28200
+input_nodes = 4260
 output_nodes = len(key_mapping)
 
 def pil_to_pygame(image):
@@ -38,7 +38,7 @@ def down_sample(image, screen):
     #image = ImageEnhance.Sharpness(image).enhance(1)
     smallImage = image.resize((sample_width,sample_height))#.filter(ImageFilter.FIND_EDGES)
     #mapImage = greyImage.crop((640,320,720,530)).resize((40,105))
-    mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((40,105))
+    mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((20,33))
 
     if(screen):
         smallImageGame = pil_to_pygame(smallImage.resize((160,240)))

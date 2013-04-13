@@ -34,6 +34,7 @@ def run(network):
 #        time.sleep(.01)
 #        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
 #        ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
+#        time.sleep(.01)
 #        ui.syn()
 
         pygame.display.flip()
