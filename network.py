@@ -28,7 +28,7 @@ output_nodes = len(key_mapping)
 def down_sample(image):
     """Takes and image and down scales and grayscales it so that each pixel
     corresponds to one input node."""
-    image = image.resize((sample_width,sample_height),Image.ANTIALIAS)
+    image = image.resize((sample_width,sample_height))
     image = ImageOps.grayscale(image)
     return image
 
@@ -47,7 +47,8 @@ def keys_to_output(keys):
     of the neural net"""
     output = [0 for i in xrange(output_nodes)]
     for key in keys:
-        output[key_mapping[key]] = 1
+        if key in key_mapping:
+            output[key_mapping[key]] = 1
     #return array.fromlist(output)
     output_array = array.array('d')
     output_array.fromlist(output)
