@@ -1,7 +1,6 @@
 from evdev import InputDevice, categorize, ecodes
 from re import search
-from datetime import datetime
-import time
+from time import time
 import os
 import Image
 
@@ -22,11 +21,11 @@ def read_input():
  
 def store():
     input_dict = {}
-    previous_time = datetime.now()
+    previous_time = time.time()
     current_time = 0
     while True:
-        current_time = datetime.now() - previous_time
-        os.system("scrot -u %(current_time)s.png", current_time)
-        current_img = Image.open("%(current_time)s.png", current_time)
+        current_time = time.time() - previous_time
+        os.system("scrot -u %ds.png" % current_time)
+        current_img = Image.open("%ds.png" % current_time)
         input_dict[(current_img,events)] = current_time
         time.sleep(0.1)
