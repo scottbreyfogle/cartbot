@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import pygame
 import time
 import sys
 import pickle
@@ -7,11 +8,15 @@ from window import get_active_window
 from network import net_to_keys,image_to_input, net_mapping
 from evdev import uinput, ecodes
 
+pygame.init()
+screen = pygame.display.set_mode((320,240))
+
 def run(network):
     running = True
     ui = uinput.UInput()
     while running:
-        vals = network.activate(image_to_input(get_active_window()))
+        screen.fill((0,0,0))
+        vals = network.activate(image_to_input(get_active_window(),screen))
         for (index, weight) in enumerate(vals):
             if weight > .5:
                 ui.write(ecodes.EV_KEY, net_mapping[index], 1)
@@ -25,9 +30,12 @@ def run(network):
                 #ui.write(ecodes.EV_KEY, ecodes.KEY_ENTER, 0)
                 ui.syn()
 
-        time.sleep(.01)
-        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
-        ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
+#        time.sleep(.01)
+#        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
+#        ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
+#        ui.syn()
+
+        pygame.display.flip()
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:

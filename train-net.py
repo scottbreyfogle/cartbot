@@ -21,6 +21,7 @@ if len(sys.argv) < 5:
 
 training_file = open(sys.argv[1], "r")
 neural_net_file = open(sys.argv[2], "w")
+data_file = open(sys.argv[2]+".data", "w")
 start_time = float(sys.argv[3])
 end_time = float(sys.argv[4])
 hidden_nodes = 15
@@ -42,11 +43,11 @@ print("Creating data set...")
 for time in training_data:
     if float(time) > start_time and float(time) < end_time:
         image_file, keys = training_data[time]
-        input_values = network.image_to_input(Image.open(image_file))
+        input_values = network.image_to_input(Image.open(image_file), None)
         output_values = network.keys_to_output(keys)
         importance = 1
         if output_values[network.key_mapping[ecodes.KEY_LEFT]] or output_values[network.key_mapping[ecodes.KEY_RIGHT]]: 
-            importance = 4
+            importance = 1
         #data_set.addSample(input_values, output_values, importance)
         for i in xrange(importance):
             data_set.addSample(input_values, output_values)
@@ -61,4 +62,5 @@ for i in xrange(50):
 print("Saving to disk...")
 
 pickle.dump(net,neural_net_file)
+pickle.dump(data_set,data_file)
 
