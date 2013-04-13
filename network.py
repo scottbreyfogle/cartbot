@@ -54,5 +54,5 @@ def keys_to_output(keys):
     output_array.fromlist(output)
     return output_array
 
-def net_to_key(weights):
+def net_to_keys(weights):
     return [net_mapping[w] for w in xrange(len(weights)) if weights[w] > .5]
