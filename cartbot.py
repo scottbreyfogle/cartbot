@@ -19,6 +19,7 @@ def run(network):
         vals = network.activate(image_to_input(get_active_window(),screen))
         for (index, weight) in enumerate(vals):
             if weight > .5:
+                #print("PUSHING: " + str(net_mapping[index]))
                 ui.write(ecodes.EV_KEY, net_mapping[index], 1)
 #                if(net_mapping[index] == ecodes.KEY_LEFT or net_mapping[index] == ecodes.KEY_RIGHT):
 #                    ui.write(ecodes.EV_KEY, net_mapping[index], 0)
