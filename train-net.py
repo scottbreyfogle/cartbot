@@ -56,7 +56,7 @@ print("Training the network...")
 
 trainer = BackpropTrainer(net, data_set)
 #trainer.trainUntilConvergence() # We want it to be verbose
-for i in xrange(100):
+for i in xrange(50):
     print("\t" + str(trainer.train()))
 
 print("Saving to disk...")
