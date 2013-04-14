@@ -1,46 +1,40 @@
 #!/usr/bin/env python2
-import pygame
-import time
-import sys
+from argparse import ArgumentParser
+from threading import Thread, Event
+from functools import partial
+from time import sleep
 import pickle
-from subprocess import Popen
-from window import get_active_window
-from network import net_to_keys,image_to_input, net_mapping
-from evdev import uinput, ecodes
 
-pygame.init()
-screen = pygame.display.set_mode((320,240))
-
-def run(network):
-    running = True
-    ui = uinput.UInput()
-    while running:
-        screen.fill((0,0,0))
-        vals = network.activate(image_to_input(get_active_window(),screen))
-        for (index, weight) in enumerate(vals):
-            if weight > .47:
-                #print("PUSHING: " + str(net_mapping[index]))
-                ui.write(ecodes.EV_KEY, net_mapping[index], 1)
-#                if(net_mapping[index] == ecodes.KEY_LEFT or net_mapping[index] == ecodes.KEY_RIGHT):
-#                    ui.write(ecodes.EV_KEY, net_mapping[index], 0)
-                ui.syn()
-
-            else:
-                #print("POPPING: " + str(net_mapping[index]))
-                ui.write(ecodes.EV_KEY, net_mapping[index], 0)
-                #ui.write(ecodes.EV_KEY, ecodes.KEY_ENTER, 0)
-                ui.syn()
-
-        #time.sleep(.1)
-        #ui.write(ecodes.EV_KEY, ecodes.KEY_LEFT, 0)
-        #ui.write(ecodes.EV_KEY, ecodes.KEY_RIGHT, 0)
-        #ui.syn()
-
-        pygame.display.flip()
+from record import record
+from predict import predict
+from network import Network,downsample_transform
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        network = pickle.load(open(sys.argv[1],"r")) 
-        run(network)
-    else:
-        print "Usage: ./cartbot.py neural-net-file"
+    parser = ArgumentParser(description="Neural Network for playing simple video games")
+
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument("-r", "--record", help="Record a game session to train the neural net", metavar=("json_save_file", "image_subdirectory"), nargs=2)
+    action.add_argument("-t", "--train", help="Train a neural net", metavar=("neural_net_save_file", "training_files"), nargs="+")
+    action.add_argument("-p", "--predict", help="Have the neural net predict and emulate user input", metavar="neural_net_save_file", nargs=1)
+    
+    args = parser.parse_args()
+    if args.record:
+        record(*args.record)
+    elif args.train:
+        n = Network(partial(downsample_transform, 20, 20), 3*20*20)
+        n.train(args.train[1:])
+        n.save(args.train[0])
+    elif args.predict:
+        with open(args.predict[0]) as f:
+            network = pickle.load(f) 
+            stop = Event()
+            t = Thread(target=predict, args=(network,stop))
+            t.start()
+            
+            try:
+                print("Cartbot is injecting user input. Ctrl-c to stop")
+                while True:
+                    sleep(.1)
+            except KeyboardInterrupt: # Make all the threads exit
+                stop.set()
+            t.join()
