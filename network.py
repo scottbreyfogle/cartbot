@@ -1,84 +1,108 @@
+from collections import Counter
+from functools import partial
+import sys
+import json
+
+from pybrain.tools.shortcuts import buildNetwork
+from pybrain.datasets import SupervisedDataSet
+from pybrain.supervised.trainers import BackpropTrainer
 from evdev import ecodes
 import ImageOps
 import ImageEnhance
 import ImageFilter
 import Image
 import array
-import pygame
 
-# Output nodes
-num_outputs = 7
+class Network:
+    def __init__(self, image_transform, input_nodes, hidden_nodes=5, output_nodes=None):
+        self.input_transform = image_transform
+        self.output_nodes = output_nodes
+        self.hidden_nodes = hidden_nodes
+        self.input_nodes = input_nodes
 
-# How far to down sample the input image
-sample_width = 40
-sample_height = 30
+    def train(self, files, min_delta = .0001, max_iterations=20):
+        event_counter = Counter()
+        
+        for file in files:
+            print("Counting events in {}".format(file))
+            with open(file ,'r') as train_file:
+                training_data = json.load(train_file)
 
-key_mapping = {
-        ecodes.KEY_UP: 0,
-        ecodes.KEY_DOWN: 1,
-        ecodes.KEY_LEFT: 2,
-        ecodes.KEY_RIGHT: 3,
-        ecodes.KEY_LEFTSHIFT: 4,
-        ecodes.KEY_Z: 5,
-        ecodes.KEY_C: 6
-}
-net_mapping = [ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_LEFTSHIFT, ecodes.KEY_Z, ecodes.KEY_C]
+            for (time, (image_file, events)) in training_data.items():
+                for (code, value) in events:
+                    event_counter[code] += 1
 
-input_nodes = 4260
-output_nodes = len(key_mapping)
+        if self.output_nodes == None:
+            self.output_nodes = self.determine_output_nodes(event_counter)
+        self.event_codes = [t[0] for t in event_counter.most_common(self.output_nodes)]
 
-def pil_to_pygame(image):
-    return pygame.image.fromstring( image.convert("RGB").tostring(), image.size, "RGB")
+        self.net = buildNetwork(self.input_nodes, self.hidden_nodes, self.output_nodes)
+        data_set = SupervisedDataSet(self.input_nodes, self.output_nodes)
 
-def down_sample(image, screen):
-    """Takes and image and down scales and grayscales it so that each pixel
-    corresponds to one input node."""
-    greyImage = ImageOps.grayscale(image)
-    #image = ImageEnhance.Contrast(image).enhance(2)
-    #image = ImageEnhance.Sharpness(image).enhance(1)
-    smallImage = image.resize((sample_width,sample_height))#.filter(ImageFilter.FIND_EDGES)
-    #mapImage = greyImage.crop((640,320,720,530)).resize((40,105))
-    mapImage = ImageOps.grayscale(ImageEnhance.Contrast(image.crop((640,320,720,530))).enhance(4)).resize((20,33))
+        for file in files:
+            print("Adding training data from {} to dataset".format(file))
+            with open(file,'r') as train_file:
+                training_data = json.load(train_file)
 
-    if(screen):
-        smallImageGame = pil_to_pygame(smallImage.resize((320,240)))
-        screen.blit(smallImageGame,smallImageGame.get_rect())
-        #mapImageGame = pil_to_pygame(mapImage.resize((160,240)))
-        #mapImageGameRect = mapImageGame.get_rect()
-        #mapImageGameRect.left = 160
-        #screen.blit(mapImageGame,mapImageGameRect)
+            for (time, (image_file, events)) in training_data.items():
+                input_values = self.input_transform(image_file)
+                output_values = self.output_transform(events)
+                data_set.addSample(input_values, output_values)
 
-    #return [smallImage,mapImage]
-    return [smallImage,mapImage]
-    #return [image]
-    #return [image.crop((0,0,2,600)), image.crop((797,0,799,600))] 
+        print("Training the network...")
 
-def image_to_input(image, screen):
-    """Takes an image and turns it into a sequence of node input values"""
-    images = down_sample(image, screen)
+        last_error = min_delta + 1
+        trainer = BackpropTrainer(self.net, data_set)
+        if not min_delta and not max_iterations: # Max iterations and min delta are 0 or None
+            trainer.trainUntilConvergence()
+            print("Neural net trained until convergence")
+        elif not max_iterations:
+            while last_error > min_delta:
+                error = trainer.train()
+                print("\t{}".format(error))
+            print("Reached target min_delta")
+        else:
+            for i in xrange(max_iterations):
+                error = trainer.train()
+                print("\t{}".format(error))
+                if min_delta and abs(last_error - error) <= min_delta:
+                    print("Reached target min_delta")
+                    break
+                last_error = error
+            else: # Happens when there was no break
+                print("Completed max iterations")
+
+    def determine_output_nodes(self, event_counter, min_difference_factor=.1):
+        common = event_counter.most_common()
+
+        last_count = common[0][1]
+        for (i, (key, count)) in enumerate(common[0:]):
+            if count < last_count * min_difference_factor:
+                return i
+        return len(event_counter)
+
+    def output_transform(self, events):
+        events = dict(events)
+        output_array = array.array('d')
+        output_array.fromlist([events[code] for code in self.event_codes])
+        return output_array
+
+def downsample_transform(width, height, image):
+    '''Simple image transform that returns a downsampled version of the image'''
+    image = Image.open(image).resize((width, height))
+
     result = []
-    for image in images:
-        for pixel in image.getdata():
-            if type(pixel) == int:
-                result += [float(pixel)]
-            else:
-                for p in pixel:
-                    result += [float(p)]
+    for pixel in image.getdata():
+        for val in pixel:
+            result.append(val)
+
     output_array = array.array('d')
     output_array.fromlist(result)
     return output_array
 
-def keys_to_output(keys):
-    """Takes a list of keys and returns a tuple which corresponds to output
-    of the neural net"""
-    output = [0 for i in xrange(output_nodes)]
-    for key in keys:
-        if key in key_mapping:
-            output[key_mapping[key]] = 1
-    #return array.fromlist(output)
-    output_array = array.array('d')
-    output_array.fromlist(output)
-    return output_array
-
-def net_to_keys(weights):
-    return [net_mapping[w] for w in xrange(len(weights)) if weights[w] > .5]
+if __name__ == '__main__':
+    if len(sys.argv) >= 2:
+        n = Network(partial(downsample_transform, 20, 20), 3*20*20)
+        n.train(sys.argv[1:])
+    else:
+        print "Usage: ./network.py training_file.json..."
