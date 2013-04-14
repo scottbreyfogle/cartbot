@@ -1,91 +1,93 @@
 #!/usr/bin/env python2
-from evdev import InputDevice, categorize, ecodes, list_devices
-from re import search
 from time import time, sleep
-from threading import Thread
-from subprocess import Popen
-import pickle
-import os
+from threading import Thread, Event
+from subprocess import check_call
+import os.path
 import sys
-import Image
+import re
 import json
 
-input_dict = {}
-events = set([]) #A set that will contain all keys currently being held down
-global running
-running = True
-global threads
-threads = []
+from evdev import InputDevice, ecodes, list_devices
 
-def read_input():
-    dev = None
-    for dev in map(InputDevice, list_devices()):
-        if dev.name.lower().find('keyboard') > 0:
-            break
-    print dev.name
-    for event in dev.read_loop():
-        if event.type == ecodes.EV_KEY:
-            (key,state) = event.code, event.value
-            if state == 1: #Key is pressed down
-                if key not in events:
-                    events.add(key) #Adds a pressed key to events
-            elif state == 0: #Key is released
-                if key in events:
-                    events.remove(key) #Removes a released key from events
-        if not running:
-            break
+input_dict = {}
+events = set([]) # A set that will contain all keys currently being held down
+complete = Event()
+running = Event()
+running.set()
+started = Event()
+
+def stop_threads():
+    started.set() 
+    running.set()
+    complete.set()
+
+def read_input(dev):
+    while not complete.is_set():
+        for event in dev.read():
+            if event.type == ecodes.EV_KEY: # Key press
+                (key,state) = event.code, event.value
+                if state == 1: # Key is pressed down
+                    events.add((key, 1))
+                elif state == 0: # Key is released
+                    events.discard((key, 1))
+                    if key == ecodes.KEY_F9: # Start
+                        print("Recording started.")
+                        started.set()
+                    elif key == ecodes.KEY_F10: # Pause
+                        print("Recording paused.")
+                        running.clear()
+                    elif key == ecodes.KEY_F11: # Unpause
+                        print("Recording resumed.")
+                        running.set()
+                    elif key == ecodes.KEY_F12: # Stop
+                        print("Recording stopped. exiting.")
+                        stop_threads()
+            if event.type == ecodes.EV_ABS: # Absolute event, gamepad analog stick
+                events.add((event.code, event.value))
  
-def store(image_dir):
-    previous_time = time()
-    current_time = 0
+def store(json_file, image_dir, sleep_duration=.1):
     if not os.path.exists(image_dir):
         os.mkdir(image_dir)
-    while running:
-        current_time = time() - previous_time
-        img_file = "%s/%.4fs.png" % (image_dir,current_time) 
-        fail = os.system("./scrot -u {}".format(img_file))
-        if fail:
-            print "Scrot failed!"
-            break
+    
+    started.wait()
+    while not complete.is_set():
+        current_time = time()
+        img_file = "{}/{:.4f}.png".format(image_dir, current_time) 
+        check_call(["./scrot", "-u", img_file])
         input_dict[current_time] = (img_file,list(events))
-        sleep(.1)
+        sleep(sleep_duration)
+        running.wait()
 
 def main():
-    thread = Thread(target=read_input)
-    thread.start()
-    threads.append(thread)
+    print("Press F9 to start recording")
+    threads = []
+    
+    for dev in map(InputDevice, list_devices()):
+        if re.search("razer|x-?box", dev.name, flags=re.IGNORECASE):
+            print "Redording events on {} ({})".format(dev.name, dev.fn)
+            recorder = Thread(target=read_input, args=(dev,))
+            recorder.start()
+            threads.append(recorder)
 
-    #emulator = Popen(["/usr/games/mupen64plus", "roms/Mario Kart 64 (USA).n64"])
+    store_thread = Thread(target=store, args=(sys.argv[1], sys.argv[2]))
+    store_thread.start()
+    threads.append(store_thread)
 
-    thread = Thread(target=store, args=(sys.argv[2],))
-    thread.start()
-    threads.append(thread)
-
-    while True:
-        if emulator.poll() == None:
+    # Wait and kill on ctrl-c if it comes
+    try:
+        while 1:
+            if complete.is_set():
+                return
             sleep(.1)
-        else:
-            return
+    except KeyboardInterrupt: # Make all the threads exit
+        stop_threads()
+
+    # Join all children
+    for thread in threads:
+        thread.join()
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
-        try:
-            emulator = main()
-        except:
-            running = False
-            for thread in threads:
-                "Joining.."
-                thread.join()
-            f = open(sys.argv[1], "w")
-            json.dump(input_dict,f)
-            raise
-        else:
-            running = False
-            for thread in threads:
-                "Joining.."
-                thread.join()
-            f = open(sys.argv[1], "w")
-            json.dump(input_dict,f)
-
+        main()
     else:
         print "Usage: ./input_store.py training_file.json image_directory"
