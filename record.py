@@ -58,6 +58,9 @@ def store(json_file, image_dir, sleep_duration=.1):
         sleep(sleep_duration)
         running.wait()
 
+    with open(json_file, 'w') as f:
+        json.dump(input_dict, f)
+
 def main():
     print("Press F9 to start recording")
     threads = []
