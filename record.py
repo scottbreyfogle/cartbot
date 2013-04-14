@@ -27,9 +27,9 @@ def read_input(dev):
             if event.type == ecodes.EV_KEY: # Key press
                 (key,state) = event.code, event.value
                 if state == 1: # Key is pressed down
-                    events.add((key, 1))
+                    events.add(((ecodes.EV_KEY, key), 1))
                 elif state == 0: # Key is released
-                    events.discard((key, 1))
+                    events.discard(((ecodes.EV_KEY, key), 1))
                     if key == ecodes.KEY_F9: # Start
                         print("Recording started.")
                         started.set()
@@ -43,7 +43,7 @@ def read_input(dev):
                         print("Recording stopped. exiting.")
                         stop_threads()
             if event.type == ecodes.EV_ABS: # Absolute event, gamepad analog stick
-                events.add((event.code, event.value))
+                events.add(((event.type, event.code), event.value))
  
 def store(json_file, image_dir, sleep_duration=.1):
     if not os.path.exists(image_dir):
@@ -61,24 +61,24 @@ def store(json_file, image_dir, sleep_duration=.1):
     with open(json_file, 'w') as f:
         json.dump(input_dict, f)
 
-def main():
-    print("Press F9 to start recording")
+def record(json_file, img_folder):
     threads = []
     
     for dev in map(InputDevice, list_devices()):
         if re.search("razer|x-?box", dev.name, flags=re.IGNORECASE):
-            print "Redording events on {} ({})".format(dev.name, dev.fn)
+            print "Recording events on {} ({})".format(dev.name, dev.fn)
             recorder = Thread(target=read_input, args=(dev,))
             recorder.start()
             threads.append(recorder)
+    print("Press F9 to start recording")
 
-    store_thread = Thread(target=store, args=(sys.argv[1], sys.argv[2]))
+    store_thread = Thread(target=store, args=(json_file, img_folder))
     store_thread.start()
     threads.append(store_thread)
 
     # Wait and kill on ctrl-c if it comes
     try:
-        while 1:
+        while True:
             if complete.is_set():
                 return
             sleep(.1)
@@ -91,6 +91,6 @@ def main():
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
-        main()
+        record(sys.argv[1], sys.argv[2])
     else:
         print "Usage: ./input_store.py training_file.json image_directory"

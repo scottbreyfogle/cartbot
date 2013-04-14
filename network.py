@@ -1,7 +1,9 @@
 from collections import Counter
-from functools import partial
+from subprocess import check_call
 import sys
 import json
+import pickle
+import array
 
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.datasets import SupervisedDataSet
@@ -11,14 +13,14 @@ import ImageOps
 import ImageEnhance
 import ImageFilter
 import Image
-import array
 
 class Network:
-    def __init__(self, image_transform, input_nodes, hidden_nodes=5, output_nodes=None):
+    def __init__(self, image_transform, input_nodes, hidden_nodes=5, output_nodes=None, temp_file="/tmp/screen.png"):
         self.input_transform = image_transform
         self.output_nodes = output_nodes
         self.hidden_nodes = hidden_nodes
         self.input_nodes = input_nodes
+        self.temp_file = temp_file
 
     def train(self, files, min_delta = .0001, max_iterations=20):
         event_counter = Counter()
@@ -30,7 +32,7 @@ class Network:
 
             for (time, (image_file, events)) in training_data.items():
                 for (code, value) in events:
-                    event_counter[code] += 1
+                    event_counter[tuple(code)] += 1
 
         if self.output_nodes == None:
             self.output_nodes = self.determine_output_nodes(event_counter)
@@ -82,10 +84,27 @@ class Network:
         return len(event_counter)
 
     def output_transform(self, events):
-        events = dict(events)
+        events = {tuple(x[0]): x[1] for x in events}
+        output_list = [] 
+        for code in self.event_codes:
+            if code in events:
+                output_list.append(events[code])
+            else:
+                output_list.append(0)
         output_array = array.array('d')
-        output_array.fromlist([events[code] for code in self.event_codes])
+        output_array.fromlist(output_list)
         return output_array
+
+    def predict(self):
+        check_call(["./scrot", "-u", self.temp_file])
+        input = self.input_transform(self.temp_file)
+        
+        weights = self.net.activate(input)
+        return weights
+
+    def save(self, file):
+        with open(file, 'w') as f:
+            pickle.dump(self, f)
 
 def downsample_transform(width, height, image):
     '''Simple image transform that returns a downsampled version of the image'''
@@ -99,10 +118,3 @@ def downsample_transform(width, height, image):
     output_array = array.array('d')
     output_array.fromlist(result)
     return output_array
-
-if __name__ == '__main__':
-    if len(sys.argv) >= 2:
-        n = Network(partial(downsample_transform, 20, 20), 3*20*20)
-        n.train(sys.argv[1:])
-    else:
-        print "Usage: ./network.py training_file.json..."
