@@ -17,3 +17,4 @@ g or G 		Press "Game Shark" button (only if cheats are enabled)
 F 			Fast Forward (playback at 250% normal speed while F key is pressed)
 [ 			Decrease volume
 ] 			Increase volume 
+
