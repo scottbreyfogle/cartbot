@@ -1,6 +1,5 @@
 from collections import Counter
 from subprocess import check_call
-import sys
 import json
 import pickle
 import array
@@ -8,10 +7,6 @@ import array
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.datasets import SupervisedDataSet
 from pybrain.supervised.trainers import BackpropTrainer
-from evdev import ecodes
-import ImageOps
-import ImageEnhance
-import ImageFilter
 import Image
 
 class Network:
