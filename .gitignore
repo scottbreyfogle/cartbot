@@ -36,3 +36,9 @@ nosetests.xml
 
 # Vim
 *.s[a-w][a-z]
+
+# Data files (json event logs, png screen caps, .net or .pickle neural nets)
+*.json
+*.png
+*.net
+*.pickle
