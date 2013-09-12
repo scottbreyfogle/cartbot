@@ -6,6 +6,7 @@ Python neural net backed mario-cart bot
 Requirements:
 mupen64plus
 Python >= 2.7
+    pil
     evdev
     pybrain
     scipy

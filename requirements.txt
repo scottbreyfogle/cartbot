@@ -1,5 +1,0 @@
-pybrain
-mupen64plus
-pil
-evdev
-scrot
