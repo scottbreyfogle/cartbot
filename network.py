@@ -17,7 +17,7 @@ class Network:
         self.input_nodes = input_nodes
         self.temp_file = temp_file
 
-    def train(self, files, min_delta = .0001, max_iterations=20):
+    def train(self, files, min_delta = 0, max_iterations=20):
         event_counter = Counter()
         
         for file in files:
@@ -69,7 +69,7 @@ class Network:
             else: # Happens when there was no break
                 print("Completed max iterations")
 
-    def determine_output_nodes(self, event_counter, min_difference_factor=.1):
+    def determine_output_nodes(self, event_counter, min_difference_factor=0):
         common = event_counter.most_common()
 
         last_count = common[0][1]
