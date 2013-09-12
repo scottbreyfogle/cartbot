@@ -25,7 +25,7 @@ if __name__ == '__main__':
     action.add_argument("-r", "--record", help="Record a game session to train the neural net", metavar=("json_save_file", "image_subdirectory"), nargs=2) # TODO: better subparser
     action.add_argument("-t", "--train", help="Train a neural net", metavar=("neural_net_save_file", "training_files"), nargs="+")
     action.add_argument("-p", "--predict", help="Have the neural net predict and emulate user input", metavar="neural_net_save_file", nargs=1)
-    
+
     args = parser.parse_args()
     if args.record:
         Recorder(*args.record).record()
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         n.save(args.train[0])
     elif args.predict:
         with open(args.predict[0]) as f:
-            network = pickle.load(f) 
+            network = pickle.load(f)
             stop = Event()
             t = Thread(target=predict, args=(network,stop))
             t.start()
