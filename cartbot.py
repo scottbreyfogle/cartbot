@@ -9,6 +9,15 @@ from record import Recorder
 from predict import predict
 from network import Network,downsample_transform
 
+def await_keyboard_interrupt():
+    try:
+        print("Cartbot is injecting user input. Ctrl-c to stop")
+        while True:
+            sleep(.1)
+    except KeyboardInterrupt: # Make all the threads exit
+        pass
+
+
 if __name__ == '__main__':
     parser = ArgumentParser(description="Neural Network for playing simple video games")
 
@@ -30,11 +39,6 @@ if __name__ == '__main__':
             stop = Event()
             t = Thread(target=predict, args=(network,stop))
             t.start()
-            
-            try:
-                print("Cartbot is injecting user input. Ctrl-c to stop")
-                while True:
-                    sleep(.1)
-            except KeyboardInterrupt: # Make all the threads exit
-                stop.set()
+            await_keyboard_interrupt()
+            stop.set()
             t.join()

@@ -14,6 +14,6 @@ def predict(network, stop, key_threshold=.5):
                 else:
                     ui.write(ecodes.EV_KEY, code, 0)
             else:
-                ui.write(type, code, int(val))
+                ui.write(type, code, val)
 
             ui.syn()

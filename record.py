@@ -77,6 +77,15 @@ class Recorder:
         with open(json_file, 'w') as f:
             json.dump(input_dict, f)
 
+    def await_keyboard_interrupt(self):
+        try:
+            while True:
+                if complete.is_set():
+                    return
+                sleep(.1)
+        except KeyboardInterrupt: # Make all the threads exit
+            return
+
     def record(self):
         for dev in map(InputDevice, list_devices()):
             if re.search("razer|x-?box", dev.name, flags=re.IGNORECASE): # TODO: better input device filtering
@@ -91,20 +100,14 @@ class Recorder:
         self.threads.append(store_thread)
 
         # Wait and kill on ctrl-c if it comes
-        try:
-            while True:
-                if complete.is_set():
-                    return
-                sleep(.1)
-        except KeyboardInterrupt: # Make all the threads exit
-            self.stop_threads()
-        finally: # Join all children
-            for thread in threads:
-                thread.join()
+        self.await_keyboard_interrupt()
+        self.stop_threads()
+        for thread in threads:
+            thread.join()
 
-    if __name__ == "__main__":
-        if len(sys.argv) == 3:
-            r = Recorder(sys.argv[1], sys.argv[2])
-            r.record()
-        else:
-            print("Usage: ./input_store.py training_file.json image_directory")
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        r = Recorder(sys.argv[1], sys.argv[2])
+        r.record()
+    else:
+        print("Usage: ./input_store.py training_file.json image_directory")
